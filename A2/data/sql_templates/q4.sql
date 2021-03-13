@@ -24,4 +24,7 @@ DROP VIEW IF EXISTS intermediate_step CASCADE;
 
 
 -- Your query that answers the question goes below the "insert into" line:
-INSERT INTO q4
+--INSERT INTO q4
+SELECT flight.airline, flight.plane
+FROM departure JOIN flight ON flight.id = departure.flight_id 
+JOIN plane ON plane.tail_number = flight.plane; 
