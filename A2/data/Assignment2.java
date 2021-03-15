@@ -44,16 +44,15 @@ public class Assignment2 {
    */
    public boolean connectDB(String URL, String username, String password) {
       // Implement this method!
-	try {
-		connection = DriverManager.getConnection(URL, username, password);
-		String query = "SET SEARCH_PATH TO air_travel, public";
-		PreparedStatement execStat = connection.prepareStatement(query);
-		execStat.executeUpdate();
-		
-		return true;
-	} catch (SQLException e) {
-		return false;
-	}
+      try {
+         connection = DriverManager.getConnection(URL, username, password);
+         String query = "SET SEARCH_PATH TO air_travel, public";
+         PreparedStatement execStat = connection.prepareStatement(query);
+         execStat.executeUpdate();
+         return true;
+      } catch (SQLException e) {
+         return false;
+      }
    }
 
   /**
@@ -63,13 +62,12 @@ public class Assignment2 {
    */
    public boolean disconnectDB() {
       // Implement this method!
-
       try {
-	connection.close();
-	return true;
+         connection.close();
+         return true;
       } catch (SQLException e) {
-	return false;
-     }
+         return false;
+      }
    }
    
    /* ======================= Airline-related methods ======================= */
@@ -89,7 +87,180 @@ public class Assignment2 {
     */
    public boolean bookSeat(int passID, int flightID, String seatClass) {
       // Implement this method!
-      return false;
+      try {
+
+         // Creates a table combining the booking, flight and plane relations
+         // which we use to find the number of bookings that exist for a given flight and seat class
+         PreparedStatement pStatement;
+         ResultSet rs;
+         String queryString =
+            "SELECT * " + 
+            "FROM BOOKING, flight, plane " + 
+            "WHERE flight.plane = plane.tail_number and booking.flight_id = flight.id and seat_class = ?::seat_class and flight_id = ?;";
+         pStatement = connection.prepareStatement(queryString);
+         pStatement.setString(1, seatClass);
+         pStatement.setInt(2, flightID);
+         rs = pStatement.executeQuery();
+
+        int count = 0;
+        int econCap = 0;
+        int busCap = 0;
+        int firstCap = 0;
+
+         int last_row = 1;
+         char last_letter = 'A';
+         String toomany = "no";
+
+         while (rs.next()) {
+            int id = rs.getInt("id");
+            int pass_id = rs.getInt("pass_id");
+            int flight_id = rs.getInt("flight_id");
+            int price = rs.getInt("price");
+            String seat_class = rs.getString("seat_class");
+            int row = rs.getInt("row");
+            String letter = rs.getString("letter");
+            econCap = rs.getInt("capacity_economy");
+            busCap = rs.getInt("capacity_business");
+            firstCap = rs.getInt("capacity_first");
+            
+            if (letter != null) {
+               count = count + 1;
+               last_row = row;
+               last_letter = letter.charAt(0);
+            }
+            else {
+               
+            }
+         }
+         
+         int final_price = 0;
+         PreparedStatement secondpStatement;
+         ResultSet secondrs;
+         String secondqueryString =
+            "SELECT * " + 
+            "FROM price " + 
+            "WHERE flight_id = ?;";
+            secondpStatement = connection.prepareStatement(secondqueryString);
+            secondpStatement.setInt(1, flightID);
+            secondrs = secondpStatement.executeQuery();
+         
+         while (secondrs.next()) {
+           final_price = secondrs.getInt(seatClass);
+         }
+
+
+         if (toomany == "yes") {
+         }
+
+         else if (last_letter == 'A') {
+            last_letter = 'B';
+         }
+         else if (last_letter == 'B') {
+            last_letter = 'C';
+         }
+         else if (last_letter == 'C') {
+            last_letter = 'D';
+         }
+         else if (last_letter == 'D') {
+            last_letter = 'E';
+         }
+         else if (last_letter == 'E') {
+            last_letter = 'F';
+         }
+         else if (last_letter == 'F') {
+            last_row = last_row + 1;
+            last_letter = 'A';
+         }
+
+         String letterinsert = String.valueOf(last_letter);
+
+
+         PreparedStatement insertpStatement;
+         int afterInsert;
+         String toInsert = 
+            "insert into " + 
+            "BOOKING(pass_id, flight_id, datetime, price, seat_class, seat_row, seat_letter) " + 
+            "values(?, ?, ?, ?, ?::seat_class, ?, ?)";
+            insertpStatement = connection.prepareStatement(toInsert);
+            insertpStatement.setInt(1, passID);
+            insertpStatement.setInt(2, flightID);
+            insertpStatement.setTimestamp(3, getCurrentTimeStamp());
+            insertpStatement.setInt(4, final_price);
+            insertpStatement.setString(5, seatClass);
+
+
+         if (seatClass == "first") {
+            if ((firstCap - count) > 0) {
+               insertpStatement = connection.prepareStatement(toInsert);
+               insertpStatement.setInt(1, passID);
+               insertpStatement.setInt(2, flightID);
+               insertpStatement.setTimestamp(3, getCurrentTimeStamp());
+               insertpStatement.setInt(4, final_price);
+               insertpStatement.setString(5, seatClass);
+               insertpStatement.setInt(6, last_row);
+               insertpStatement.setString(7, letterinsert);
+               insertpStatement.executeUpdate();
+            }
+            else {
+            }
+         }
+         else if (seatClass == "business") {
+            if ((busCap - count) > 0) {
+               insertpStatement = connection.prepareStatement(toInsert);
+               insertpStatement.setInt(1, passID);
+               insertpStatement.setInt(2, flightID);
+               insertpStatement.setTimestamp(3, getCurrentTimeStamp());
+               insertpStatement.setInt(4, final_price);
+               insertpStatement.setString(5, seatClass);
+               insertpStatement.setInt(6, last_row);
+               insertpStatement.setString(7, letterinsert);
+               insertpStatement.executeUpdate();
+            }
+            else {
+            }
+         }
+         else if (seatClass == "economy") {
+            if ((econCap - count) >= -10 && (econCap - count) <= 0) {
+               insertpStatement = connection.prepareStatement(toInsert);
+               insertpStatement.setInt(1, passID);
+               insertpStatement.setInt(2, flightID);
+               insertpStatement.setTimestamp(3, getCurrentTimeStamp());
+               insertpStatement.setInt(4, final_price);
+               insertpStatement.setString(5, seatClass);
+               insertpStatement.setInt(6, 0);
+               insertpStatement.setString(7, "");
+               insertpStatement.executeUpdate();
+            }
+            else if ((econCap - count) > 0) {
+               insertpStatement = connection.prepareStatement(toInsert);
+               insertpStatement.setInt(1, passID);
+               insertpStatement.setInt(2, flightID);
+               insertpStatement.setTimestamp(3, getCurrentTimeStamp());
+               insertpStatement.setInt(4, final_price);
+               insertpStatement.setString(5, seatClass);
+               insertpStatement.setInt(6, last_row);
+               insertpStatement.setString(7, letterinsert);
+               insertpStatement.executeUpdate();
+            }
+            else {
+            }
+         }
+         else {
+         }
+
+
+         
+
+
+         
+
+
+
+         return true;
+      } catch (SQLException e) {
+         return false;
+      }
+
    }
 
    /**
@@ -135,8 +306,21 @@ public class Assignment2 {
   /* ----------------------- Main method below  ------------------------- */
 
    public static void main(String[] args) {
+
       // You can put testing code in here. It will not affect our autotester.
       System.out.println("Running the code!");
+
+      try {
+         Assignment2 a2 = new Assignment2();
+         boolean conn = a2.connectDB("jdbc:postgresql://localhost:5432/csc343h-khanab56", "khanab56", "");
+         a2.bookSeat(1,5,"economy");
+         conn = a2.disconnectDB();
+      } catch(SQLException e) {
+         System.err.println("error: ");
+      }
+
+
+
    }
 
 }

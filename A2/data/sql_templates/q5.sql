@@ -31,24 +31,25 @@ INSERT INTO q5
 WITH RECURSIVE maxFlights AS (
 	
 	(
-	SELECT inbound, outbound, s_dep, s_arv, 1 as num_flights
-	FROM Flight
-	WHERE outbound = 'YYZ' and date(s_dep) = (SELECT day FROM day) and 1 <= (SELECT n FROM n)
+	SELECT inbound, outbound, s_dep, s_arv, 1 as flight_num, n
+	FROM Flight, n, day
+	WHERE outbound = 'YYZ' and date(s_dep) = (SELECT day from day)
 	)
 
 	UNION ALL
 
 	(
-	SELECT Flight.inbound, Flight.outbound, Flight.s_dep, Flight.s_arv, num_flights+1 as num_flights
-	FROM Flight INNER JOIN maxFlights ON Flight.outbound = maxFlights.inbound 
-	WHERE num_flights <= (SELECT n FROM n) and 
-	(Flight.s_dep - maxFlights.s_arv) <= '24:00:00' and (Flight.s_dep - maxFlights.s_arv) >= '00:00:00'
+	SELECT Flight.inbound, Flight.outbound, Flight.s_dep, Flight.s_arv, (maxFlights.flight_num+1) as flight_num, n
+	FROM Flight, maxFlights
+	WHERE Flight.outbound = maxFlights.inbound and (maxFlights.flight_num + 1) < (SELECT n from n) and (Flight.s_dep - maxFlights.s_arv) <= '24:00:00' and (Flight.s_dep - maxFlights.s_arv) >= '00:00:00'
 	)
 
-)SELECT inbound as destination, num_flights
+)SELECT inbound as destination, flight_num as num_flights
 FROM maxFlights;
 
 SELECT * FROM q5;
+
+
 
 
 
