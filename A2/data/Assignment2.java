@@ -44,7 +44,16 @@ public class Assignment2 {
    */
    public boolean connectDB(String URL, String username, String password) {
       // Implement this method!
-      return false;
+	try {
+		connection = DriverManager.getConnection(URL, username, password);
+		String query = "SET SEARCH_PATH TO air_travel, public";
+		PreparedStatement execStat = connection.prepareStatement(query);
+		execStat.executeUpdate();
+		
+		return true;
+	} catch (SQLException e) {
+		return false;
+	}
    }
 
   /**
@@ -54,7 +63,13 @@ public class Assignment2 {
    */
    public boolean disconnectDB() {
       // Implement this method!
-      return false;
+
+      try {
+	connection.close();
+	return true;
+      } catch (SQLException e) {
+	return false;
+     }
    }
    
    /* ======================= Airline-related methods ======================= */
